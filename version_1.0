@@ -191,103 +191,98 @@ local function sCh()
 cO=true
 choppedCount=0
 chC=task.spawn(function()
-    local currentTree=nil
-    local cuttingDone=false
-    local hasTP=false
-    
-    while cO do
-        local c=P.Character
-        if c then
-            local h=c:FindFirstChild("HumanoidRootPart")
-            local tl=c:FindFirstChildOfClass("Tool")
-            
-            if not tl then
-                local bp=P:FindFirstChild("Backpack")
-                if bp then
-                    for _,t in ipairs(bp:GetChildren())do
-                        if t:IsA("Tool")then
-                            c.Humanoid:EquipTool(t)
-                            task.wait(0.3)
-                            break
-                        end
-                    end
-                end
-            elseif h then
-                if cuttingDone then
-                    print("[TAKO] Jeda 3 detik...")
-                    task.wait(3)
-                    cuttingDone=false
-                    currentTree=nil
-                    hasTP=false
-                    if targetTree>0 and choppedCount>=targetTree then
-                        print("[TAKO] Batch selesai — lanjut batch baru")
-                        choppedCount=0
-                    end
-                end
-                
-                if not currentTree then
-                    local nr,mD=nil,25
-                    local nrTree=nil
-                    local allTrees=getAllTrees()
-                    local sw=sW:lower()
-                    for _,t in ipairs(allTrees)do
-                        local tp=gTT(t)
-                        local tl2=tp:lower()
-                        local mt=(tl2==sw) or (tl2:find(sw,1,true)~=nil)
-                        if mt then
-                            for _,p in ipairs(t:GetDescendants())do
-                                if p.Name=="WoodSection"then
-                                    local d=(p.Position-h.Position).Magnitude
-                                    if d<mD then
-                                        mD=d
-                                        nr=p
-                                        nrTree=t
-                                    end
-                                    break
-                                end
-                            end
-                        end
-                    end
-                    
-                    if nr and nrTree then
-                        currentTree=nrTree
-                        local wp=nr.Position
-                        local dir=Vector3.new(wp.X-h.Position.X,0,wp.Z-h.Position.Z)
-                        if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
-                        dir=dir.Unit
-                        local fp=wp-dir*2.5+Vector3.new(0,1,0)
-                        h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
-                        print("[TAKO] TP ke pohon ke-"..(choppedCount+1).."/"..(targetTree>0 and targetTree or "∞"))
-                        task.wait(0.1)
-                        hasTP=true
-                    else
-                        task.wait(1)
-                    end
-                else
-                    local ws=nil
-                    for _,p in ipairs(currentTree:GetDescendants())do
-                        if p.Name=="WoodSection"then
-                            ws=p break
-                        end
-                    end
-                    
-                    if ws then
-                        if hasTP then
-                            local wp=ws.Position
-                            local fp=h.Position
-                            h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
-                            pcall(function() tl:Activate() end)
-                        end
-                    else
-                        choppedCount=choppedCount+1
-                        print("[TAKO] Pohon tumbang! ("..choppedCount.."/"..(targetTree>0 and targetTree or "∞")..")")
-                        cuttingDone=true
-                    end
-                end
-            end
-        end
-        task.wait(0.4)
-    end
+local currentTree=nil
+local cuttingDone=false
+local hasTP=false
+while cO do
+local c=P.Character
+if c then
+local h=c:FindFirstChild("HumanoidRootPart")
+local tl=c:FindFirstChildOfClass("Tool")
+if not tl then
+local bp=P:FindFirstChild("Backpack")
+if bp then
+for _,t in ipairs(bp:GetChildren())do
+if t:IsA("Tool")then
+c.Humanoid:EquipTool(t)
+task.wait(0.3)
+break
+end
+end
+end
+elseif h then
+if cuttingDone then
+print("[TAKO] Jeda 3 detik...")
+task.wait(3)
+cuttingDone=false
+currentTree=nil
+hasTP=false
+if targetTree>0 and choppedCount>=targetTree then
+print("[TAKO] Batch selesai — lanjut batch baru")
+choppedCount=0
+end
+end
+if not currentTree then
+local nr,mD=nil,25
+local nrTree=nil
+local allTrees=getAllTrees()
+local sw=sW:lower()
+for _,t in ipairs(allTrees)do
+local tp=gTT(t)
+local tl2=tp:lower()
+local mt=(tl2==sw) or (tl2:find(sw,1,true)~=nil)
+if mt then
+for _,p in ipairs(t:GetDescendants())do
+if p.Name=="WoodSection"then
+local d=(p.Position-h.Position).Magnitude
+if d<mD then
+mD=d
+nr=p
+nrTree=t
+end
+break
+end
+end
+end
+end
+if nr and nrTree then
+currentTree=nrTree
+local wp=nr.Position
+local dir=Vector3.new(wp.X-h.Position.X,0,wp.Z-h.Position.Z)
+if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
+dir=dir.Unit
+local fp=wp-dir*2.5+Vector3.new(0,1,0)
+h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+print("[TAKO] TP ke pohon ke-"..(choppedCount+1).."/"..(targetTree>0 and targetTree or "∞"))
+task.wait(0.1)
+hasTP=true
+else
+task.wait(1)
+end
+else
+local ws=nil
+for _,p in ipairs(currentTree:GetDescendants())do
+if p.Name=="WoodSection"then
+ws=p break
+end
+end
+if ws then
+if hasTP then
+local wp=ws.Position
+local fp=h.Position
+h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+pcall(function() tl:Activate() end)
+end
+else
+choppedCount=choppedCount+1
+print("[TAKO] Pohon tumbang! ("..choppedCount.."/"..(targetTree>0 and targetTree or "∞")..")")
+cuttingDone=true
+end
+end
+end
+end
+task.wait(0.4)
+end
 end)
 end
 
@@ -586,311 +581,7 @@ hd.InputChanged:Connect(function(i)
 if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
 local d=i.Position-ds
 mf.Position=UDim2.new(sp2.X.Scale,sp2.X.Offset+d.X,sp2.Y.Scale,sp2.Y.Offset+d.Y)
-cb.Position=UDim2.new(mf.Position.X.Scale,mf.Position.X.Offset+161,mf.Position.Y.Scale,mf.Poelse
-                        choppedCount=choppedCount+1
-                        print("[TAKO] Pohon tumbang! ("..choppedCount.."/"..(targetTree>0 and targetTree or "∞")..")")
-                        cuttingDone=true
-                    end
-                end
-            end
-        end
-        task.wait(0.4)
-    end
-end)
-end
-
-local sg=Instance.new("ScreenGui",CG)
-sg.Name="MyLT2UI"
-sg.ResetOnSpawn=false
-sg.DisplayOrder=999
-
-local tb=Instance.new("TextButton",sg)
-tb.Size=UDim2.new(0,36,0,36)
-tb.Position=UDim2.new(0,12,0.5,-18)
-tb.BackgroundColor3=Color3.fromRGB(35,35,40)
-tb.Text="TH"tb.TextSize=13
-tb.TextColor3=Color3.new(1,1,1)
-tb.Font=Enum.Font.GothamBold
-tb.BorderSizePixel=0
-Instance.new("UICorner",tb).CornerRadius=UDim.new(1,0)
-
-local mf=Instance.new("Frame",sg)
-mf.Size=UDim2.new(0,185,0,430)
-mf.Position=UDim2.new(0,60,0.5,-215)
-mf.BackgroundColor3=Color3.fromRGB(25,25,30)
-mf.BorderSizePixel=0
-mf.Visible=false
-Instance.new("UICorner",mf).CornerRadius=UDim.new(0,10)
-
-local hd=Instance.new("Frame",mf)
-hd.Size=UDim2.new(1,0,0,26)
-hd.BackgroundColor3=Color3.fromRGB(35,35,42)
-hd.BorderSizePixel=0
-Instance.new("UICorner",hd).CornerRadius=UDim.new(0,10)
-
-local ttl=Instance.new("TextLabel",hd)
-ttl.Size=UDim2.new(1,-32,1,0)
-ttl.Position=UDim2.new(0,7,0,0)
-ttl.BackgroundTransparency=1
-ttl.Text="TAKO HUB"
-ttl.TextColor3=Color3.new(1,1,1)
-ttl.TextSize=10
-ttl.Font=Enum.Font.GothamBold
-ttl.TextXAlignment=Enum.TextXAlignment.Left
-
-local cb=Instance.new("TextButton",sg)
-cb.Size=UDim2.new(0,20,0,20)
 cb.Position=UDim2.new(mf.Position.X.Scale,mf.Position.X.Offset+161,mf.Position.Y.Scale,mf.Position.Y.Offset+3)
-cb.BackgroundColor3=Color3.fromRGB(220,60,60)
-cb.Text="X"cb.TextColor3=Color3.new(1,1,1)
-cb.TextSize=10
-cb.Font=Enum.Font.GothamBold
-cb.BorderSizePixel=0
-cb.Visible=false
-Instance.new("UICorner",cb).CornerRadius=UDim.new(0,5)
-
-local sc=Instance.new("ScrollingFrame",mf)
-sc.Size=UDim2.new(1,-8,1,-30)
-sc.Position=UDim2.new(0,4,0,28)
-sc.BackgroundTransparency=1
-sc.BorderSizePixel=0
-sc.ScrollBarThickness=3
-sc.CanvasSize=UDim2.new(0,0,0,0)
-sc.AutomaticCanvasSize=Enum.AutomaticSize.Y
-local ll=Instance.new("UIListLayout",sc)
-ll.Padding=UDim.new(0,2)
-ll.SortOrder=Enum.SortOrder.LayoutOrder
-local pd=Instance.new("UIPadding",sc)
-pd.PaddingTop=UDim.new(0,3)
-pd.PaddingBottom=UDim.new(0,6)
-
-local function mB(t,cbk)
-local b=Instance.new("TextButton",sc)
-b.Size=UDim2.new(1,0,0,22)
-b.BackgroundColor3=Color3.fromRGB(45,45,55)
-b.Text=t b.TextColor3=Color3.fromRGB(230,230,230)
-b.TextSize=9 b.Font=Enum.Font.GothamMedium
-b.BorderSizePixel=0 b.LayoutOrder=n()
-Instance.new("UICorner",b).CornerRadius=UDim.new(0,4)
-b.MouseButton1Click:Connect(function()
-b.BackgroundColor3=Color3.fromRGB(70,130,200)
-task.wait(0.1)
-b.BackgroundColor3=Color3.fromRGB(45,45,55)
-if cbk then cbk()end end)
-end
-
-local function mT(t,cbk)
-local s=false
-local f=Instance.new("Frame",sc)
-f.Size=UDim2.new(1,0,0,22)
-f.BackgroundColor3=Color3.fromRGB(45,45,55)
-f.BorderSizePixel=0
-f.LayoutOrder=n()
-Instance.new("UICorner",f).CornerRadius=UDim.new(0,4)
-local l=Instance.new("TextLabel",f)
-l.Size=UDim2.new(1,-36,1,0)
-l.Position=UDim2.new(0,5,0,0)
-l.BackgroundTransparency=1
-l.Text=t l.TextColor3=Color3.fromRGB(230,230,230)
-l.TextSize=9 l.Font=Enum.Font.GothamMedium
-l.TextXAlignment=Enum.TextXAlignment.Left
-local bg=Instance.new("Frame",f)
-bg.Size=UDim2.new(0,26,0,13)
-bg.Position=UDim2.new(1,-31,0.5,-6.5)
-bg.BackgroundColor3=Color3.fromRGB(70,70,80)
-bg.BorderSizePixel=0
-Instance.new("UICorner",bg).CornerRadius=UDim.new(1,0)
-local kn=Instance.new("Frame",bg)
-kn.Size=UDim2.new(0,9,0,9)
-kn.Position=UDim2.new(0,2,0.5,-4.5)
-kn.BackgroundColor3=Color3.new(1,1,1)
-kn.BorderSizePixel=0
-Instance.new("UICorner",kn).CornerRadius=UDim.new(1,0)
-local cl=Instance.new("TextButton",f)
-cl.Size=UDim2.new(1,0,1,0)
-cl.BackgroundTransparency=1
-cl.Text=""
-cl.MouseButton1Click:Connect(function()
-s=not s
-if s then bg.BackgroundColor3=Color3.fromRGB(70,130,200)
-kn.Position=UDim2.new(1,-11,0.5,-4.5)
-else bg.BackgroundColor3=Color3.fromRGB(70,70,80)
-kn.Position=UDim2.new(0,2,0.5,-4.5)end
-if cbk then cbk(s)end end)
-end
-
-local function mS(t)
-local l=Instance.new("TextLabel",sc)
-l.Size=UDim2.new(1,0,0,14)
-l.BackgroundTransparency=1
-l.Text="• "..t
-l.TextColor3=Color3.fromRGB(120,170,255)
-l.TextSize=9
-l.Font=Enum.Font.GothamBold
-l.TextXAlignment=Enum.TextXAlignment.Left
-l.LayoutOrder=n()
-end
-
-local function mSl(t,mn,mx,dv,cbk)
-local f=Instance.new("Frame",sc)
-f.Size=UDim2.new(1,0,0,30)
-f.BackgroundColor3=Color3.fromRGB(45,45,55)
-f.BorderSizePixel=0
-f.LayoutOrder=n()
-Instance.new("UICorner",f).CornerRadius=UDim.new(0,4)
-local l=Instance.new("TextLabel",f)
-l.Size=UDim2.new(1,-12,0,11)
-l.Position=UDim2.new(0,5,0,2)
-l.BackgroundTransparency=1
-l.Text=t..": "..dv
-l.TextColor3=Color3.fromRGB(230,230,230)
-l.TextSize=8
-l.Font=Enum.Font.GothamMedium
-l.TextXAlignment=Enum.TextXAlignment.Left
-local tr=Instance.new("Frame",f)
-tr.Size=UDim2.new(1,-8,0,4)
-tr.Position=UDim2.new(0,4,0,19)
-tr.BackgroundColor3=Color3.fromRGB(70,70,80)
-tr.BorderSizePixel=0
-Instance.new("UICorner",tr).CornerRadius=UDim.new(1,0)
-local fl=Instance.new("Frame",tr)
-fl.Size=UDim2.new((dv-mn)/(mx-mn),0,1,0)
-fl.BackgroundColor3=Color3.fromRGB(70,130,200)
-fl.BorderSizePixel=0
-Instance.new("UICorner",fl).CornerRadius=UDim.new(1,0)
-local kn=Instance.new("Frame",tr)
-kn.Size=UDim2.new(0,9,0,9)
-kn.Position=UDim2.new((dv-mn)/(mx-mn),-4.5,0.5,-4.5)
-kn.BackgroundColor3=Color3.new(1,1,1)
-kn.BorderSizePixel=0
-Instance.new("UICorner",kn).CornerRadius=UDim.new(1,0)
-local cl=Instance.new("TextButton",f)
-cl.Size=UDim2.new(1,0,1,0)
-cl.BackgroundTransparency=1
-cl.Text=""
-local dg=false
-local function ud(i)
-local ax=tr.AbsolutePosition.X
-local sx=tr.AbsoluteSize.X
-local x=math.clamp(i.Position.X-ax,0,sx)
-local pc=x/sx
-local v=math.floor(mn+(mx-mn)*pc)
-fl.Size=UDim2.new(pc,0,1,0)
-kn.Position=UDim2.new(pc,-4.5,0.5,-4.5)
-l.Text=t..": "..v
-if cbk then cbk(v)end end
-cl.InputBegan:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-dg=true ud(i)end end)
-cl.InputChanged:Connect(function(i)
-if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
-ud(i)end end)
-UIS.InputEnded:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-dg=false end end)
-end
-
-local function mD(t,lst,dv,cbk)
-local f=Instance.new("Frame",sc)
-f.Size=UDim2.new(1,0,0,22)
-f.BackgroundColor3=Color3.fromRGB(45,45,55)
-f.BorderSizePixel=0
-f.LayoutOrder=n()
-Instance.new("UICorner",f).CornerRadius=UDim.new(0,4)
-local btn=Instance.new("TextButton",f)
-btn.Size=UDim2.new(1,0,1,0)
-btn.BackgroundTransparency=1
-btn.Text="  "..t..": "..dv.."  v"
-btn.TextColor3=Color3.fromRGB(230,230,230)
-btn.TextSize=9
-btn.Font=Enum.Font.GothamMedium
-btn.TextXAlignment=Enum.TextXAlignment.Left
-local op,lf=false,nil
-btn.MouseButton1Click:Connect(function()
-if op and lf then lf:Destroy()lf=nil op=false return end
-op=true
-lf=Instance.new("ScrollingFrame",sg)
-lf.Size=UDim2.new(0,140,0,110)
-lf.Position=UDim2.new(0,60,0,200)
-lf.BackgroundColor3=Color3.fromRGB(35,35,42)
-lf.BorderSizePixel=0
-lf.ZIndex=200
-lf.ScrollBarThickness=3
-lf.CanvasSize=UDim2.new(0,0,0,0)
-lf.AutomaticCanvasSize=Enum.AutomaticSize.Y
-Instance.new("UICorner",lf).CornerRadius=UDim.new(0,6)
-local ly=Instance.new("UIListLayout",lf)
-ly.Padding=UDim.new(0,2)
-local nl=lst
-if type(lst)=="function"then nl=lst()end
-for _,w in ipairs(nl)do
-local o=Instance.new("TextButton",lf)
-o.Size=UDim2.new(1,-6,0,20)
-o.BackgroundColor3=Color3.fromRGB(45,45,55)
-o.Text="  "..w
-o.TextColor3=Color3.fromRGB(230,230,230)
-o.TextSize=9
-o.Font=Enum.Font.GothamMedium
-o.TextXAlignment=Enum.TextXAlignment.Left
-o.BorderSizePixel=0
-o.ZIndex=201
-Instance.new("UICorner",o).CornerRadius=UDim.new(0,3)
-o.MouseButton1Click:Connect(function()
-dv=w
-btn.Text="  "..t..": "..dv.."  v"
-if cbk then cbk(w)end
-if lf then lf:Destroy()lf=nil end
-op=false end)
 end end)
-end
 
-mS("AUTO CHOP")
-mSl("Target Pohon",0,50,targetTree,function(v)
-targetTree=v
-print("[TAKO] Target:",v==0 and "Unlimited" or v)
-end)
-mD("Jenis Kayu",function()
-local list=getAvailableWoods()
-if #list==0 then return {"Belum ada pohon"}end
-return list
-end,sW,function(w)sW=w print("[TAKO] Pilih:",w)end)
-mB("TP Ke Pohon",tpT)
-mT("Auto Chop",function(s)if s then sCh()else cO=false print("[TAKO] OFF")end end)
-
-mS("TP KE REGION")
-local selRegion=""
-mD("Pilih Region",REGIONS,"",function(r)selRegion=r print("[TAKO] Region:",r)end)
-mB("TP Ke Region",function()
-if selRegion~=""then tpToRegion(selRegion)end
-end)
-
-mS("SPEED")mT("Speed",function(s)sO=s end)mSl("Speed",20,300,sV,function(v)sV=v end)
-mS("FLY")mT("Fly",function(s)if s then sF()else stF()end end)mSl("Ketinggian",0,200,0,function(v)fH=v end)
-mS("TELEPORT")
-local sp=""
-mD("Pilih Pemain",gPL,"",function(nm)sp=nm end)
-mB("TP Ke Pemain",function()if sp~=""then tpP(sp)end end)
-mS("VISUAL")mT("Always Day",function(s)if s then sDay()else stDay()end end)
-mT("Noclip",function(s)nO=s
-if not s and P.Character then for _,p in ipairs(P.Character:GetDescendants())do
-if p:IsA("BasePart")then pcall(function()p.CanCollide=true p.CanQuery=true p.CanTouch=true end)end end end end)
-mS("MISC")mB("Rejoin",function()game:GetService("TeleportService"):Teleport(game.PlaceId,P)end)
-
-tb.MouseButton1Click:Connect(function()
-mf.Visible=not mf.Visible
-cb.Visible=mf.Visible end)
-cb.MouseButton1Click:Connect(function()
-if fO then stF()end cO=false stDay()sO=false nO=false
-sg:Destroy()end)
-
-local dg,ds,sp2
-hd.InputBegan:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-dg=true ds=i.Position sp2=mf.Position
-i.Changed:Connect(function()
-if i.UserInputState==Enum.UserInputState.End then dg=false end end)
-end end)
-hd.InputChanged:Connect(function(i)
-if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
-local d=i.Position-ds
-mf.Position=UDim2.new
+print("TAKO HUB v2 LOADED — Fix Auto Chop")
