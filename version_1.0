@@ -1,48 +1,11 @@
 local CG=game:GetService("CoreGui")local TS=game:GetService("TweenService")local UIS=game:GetService("UserInputService")local RS=game:GetService("RunService")local P=game.Players.LocalPlayer
 if CG:FindFirstChild("MyLT2UI")then CG.MyLT2UI:Destroy()end
-local fO,cO,sO,nO,dO=false,false,false,false,false
-local sW="Generic"local fH=0 local sV=60
+_G.T={cO=false,sW="Generic",targetTree=1,choppedCount=0}
+local cO=false
+local sW="Generic"
 local targetTree=1
 local choppedCount=0
-local fC,fB,fA,fY,chC,dC
-local ord=0 local function n()ord=ord+1 return ord end
-local REGIONS={"Region_LittleMeadow","Region_Plains","Region_Main","Region_SandIslands","Region_Snow","Region_SnowPeak","Region_Swamp","Region_Tropics","Region_Volcano","Region_MountainSide","Region_MazeCave","Region_Underbridge","Region_WaterCave"}
-
-RS.RenderStepped:Connect(function()
-local c=P.Character if not c then return end
-local m=c:FindFirstChildOfClass("Humanoid")if not m then return end
-if nO then for _,p in ipairs(c:GetDescendants())do if p:IsA("BasePart")then pcall(function()p.CanCollide=false p.CanQuery=false p.CanTouch=false end)end end end
-if sO and not fO then pcall(function() m.WalkSpeed=sV end)end
-end)
-
-local function sDay()
-dO=true local l=game:GetService("Lighting")
-l.ClockTime=14 l.Brightness=2 l.GlobalShadows=false
-dC=RS.Heartbeat:Connect(function()if dO then l.ClockTime=14 l.Brightness=2 end end)
-end
-local function stDay()
-dO=false if dC then dC:Disconnect()dC=nil end
-game:GetService("Lighting").Brightness=1
-end
-
-local function gPL()
-local l={}
-for _,pl in ipairs(game.Players:GetPlayers())do
-if pl~=P then local ch=pl.Character
-if ch and ch:FindFirstChild("HumanoidRootPart")then table.insert(l,pl.Name)end end end
-return l
-end
-
-local function tpP(pN)
-local t=game.Players:FindFirstChild(pN)if not t then return false end
-local tc=t.Character if not tc then return false end
-local th=tc:FindFirstChild("HumanoidRootPart")if not th then return false end
-local mc=P.Character if not mc then return false end
-local mh=mc:FindFirstChild("HumanoidRootPart")if not mh then return false end
-local tp=th.Position local tl=th.CFrame.LookVector
-mh.CFrame=CFrame.new(tp-tl*3,tp)
-print("[TAKO] TP ke pemain:",pN)return true
-end
+local chC
 
 local function gTT(t)
 local c=t:FindFirstChild("TreeClass")
@@ -53,6 +16,7 @@ local a=t:GetAttribute("TreeClass")
 if a then return tostring(a) end
 return t.Name
 end
+_G.T.gTT=gTT
 
 local function getAllTrees()
 local trees={}
@@ -69,6 +33,7 @@ end
 end
 return trees
 end
+_G.T.getAllTrees=getAllTrees
 
 local function getAvailableWoods()
 local trees=getAllTrees()
@@ -85,33 +50,10 @@ table.sort(list)
 return list
 end
 
-local function tpToRegion(regionName)
-local region=workspace:FindFirstChild(regionName)
-if not region then print("[TAKO] Region gak ada") return false end
-local char=P.Character
-local hrp=char and char:FindFirstChild("HumanoidRootPart")
-if not hrp then return false end
-local targetPos=nil
-if region:IsA("Folder") or region:IsA("Model")then
-for _,part in ipairs(region:GetDescendants())do
-if part:IsA("BasePart")then
-targetPos=part.Position+Vector3.new(0,5,0)
-break
-end
-end
-end
-if targetPos then
-hrp.CFrame=CFrame.new(targetPos)
-print("[TAKO] TP ke region:",regionName)
-return true
-end
-return false
-end
-
 local function fT()
 local c=P.Character
 local h=c and c:FindFirstChild("HumanoidRootPart")
-if not h then print("[TAKO] Karakter gak ada") return end
+if not h then return end
 local allTrees=getAllTrees()
 if #allTrees==0 then print("[TAKO] Pohon belum spawn") return end
 local b=nil
@@ -139,52 +81,11 @@ if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
 dir=dir.Unit
 local fp=wp-dir*2.5+Vector3.new(0,1,0)
 h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+local cam=workspace.CurrentCamera
+if cam then cam.CameraType=Enum.CameraType.Scriptable cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
 else
 print("[TAKO] GAK ADA pohon:",sW)
 end
-end
-
-local function tpT()
-fT()
-end
-
-local function sF()
-if fO then return end
-fO=true
-local c=P.Character
-local h=c and c:FindFirstChild("HumanoidRootPart")
-local m=c and c:FindFirstChildOfClass("Humanoid")
-if not h or not m then fO=false return end
-m.AutoRotate=false fY=h.Position.Y
-local at=Instance.new("Attachment",h)at.Name="FlyAtt"
-fA=Instance.new("AlignOrientation",h)fA.Attachment0=at
-fA.Mode=Enum.OrientationAlignmentMode.OneAttachment
-fA.MaxTorque=9e9 fA.Responsiveness=50 fA.CFrame=CFrame.new(h.Position)
-fB=Instance.new("BodyVelocity",h)fB.MaxForce=Vector3.new(9e9,9e9,9e9)
-fB.Velocity=Vector3.zero fB.P=50000
-fC=RS.RenderStepped:Connect(function(dt)
-if not fO then return end
-local cc=P.Character if not cc then return end
-local r=cc:FindFirstChild("HumanoidRootPart")local hh=cc:FindFirstChildOfClass("Humanoid")
-if not r or not hh or not fB then return end
-local md=hh.MoveDirection local tv=Vector3.zero
-if md.Magnitude>0 then local f=Vector3.new(md.X,0,md.Z)
-if f.Magnitude>0 then tv=f.Unit*60 end end
-local v=fB.Velocity
-local sx=v.X+(tv.X-v.X)*math.min(dt*12,1)
-local sz=v.Z+(tv.Z-v.Z)*math.min(dt*12,1)
-local ty=fY+fH local df=ty-r.Position.Y local vy=0
-if math.abs(df)>0.3 then vy=math.clamp(df*10,-300,300)end
-fB.Velocity=Vector3.new(sx,vy,sz)
-if fA then fA.CFrame=CFrame.new(r.Position)end
-end)
-end
-local function stF()
-fO=false if fC then fC:Disconnect()fC=nil end
-local c=P.Character if c then local m=c:FindFirstChildOfClass("Humanoid")
-if m then m.AutoRotate=true end end
-if fB then fB:Destroy()fB=nil end
-if fA then fA:Destroy()fA=nil end
 end
 
 local function sCh()
@@ -194,20 +95,22 @@ chC=task.spawn(function()
 local currentTree=nil
 local cuttingDone=false
 local hasTP=false
+local cam=workspace.CurrentCamera
+local oldCamType=cam.CameraType
+local oldCamSubject=cam.CameraSubject
+cam.CameraType=Enum.CameraType.Scriptable
 while cO do
 local c=P.Character
 if c then
 local h=c:FindFirstChild("HumanoidRootPart")
+local hum=c:FindFirstChildOfClass("Humanoid")
 local tl=c:FindFirstChildOfClass("Tool")
+if hum and hum.AutoRotate then hum.AutoRotate=false end
 if not tl then
 local bp=P:FindFirstChild("Backpack")
 if bp then
 for _,t in ipairs(bp:GetChildren())do
-if t:IsA("Tool")then
-c.Humanoid:EquipTool(t)
-task.wait(0.3)
-break
-end
+if t:IsA("Tool")then c.Humanoid:EquipTool(t) task.wait(0.3) break end
 end
 end
 elseif h then
@@ -217,10 +120,7 @@ task.wait(3)
 cuttingDone=false
 currentTree=nil
 hasTP=false
-if targetTree>0 and choppedCount>=targetTree then
-print("[TAKO] Batch selesai — lanjut batch baru")
-choppedCount=0
-end
+if targetTree>0 and choppedCount>=targetTree then print("[TAKO] Batch selesai — lanjut batch baru") choppedCount=0 end
 end
 if not currentTree then
 local nr,mD=nil,25
@@ -235,11 +135,7 @@ if mt then
 for _,p in ipairs(t:GetDescendants())do
 if p.Name=="WoodSection"then
 local d=(p.Position-h.Position).Magnitude
-if d<mD then
-mD=d
-nr=p
-nrTree=t
-end
+if d<mD then mD=d nr=p nrTree=t end
 break
 end
 end
@@ -253,24 +149,25 @@ if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
 dir=dir.Unit
 local fp=wp-dir*2.5+Vector3.new(0,1,0)
 h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+if hum then hum.AutoRotate=false end
+if cam then cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
 print("[TAKO] TP ke pohon ke-"..(choppedCount+1).."/"..(targetTree>0 and targetTree or "∞"))
-task.wait(0.1)
+task.wait(0.15)
 hasTP=true
-else
-task.wait(1)
-end
+else task.wait(1) end
 else
 local ws=nil
 for _,p in ipairs(currentTree:GetDescendants())do
-if p.Name=="WoodSection"then
-ws=p break
-end
+if p.Name=="WoodSection"then ws=p break end
 end
 if ws then
 if hasTP then
 local wp=ws.Position
 local fp=h.Position
 h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+if hum then hum.AutoRotate=false end
+if cam then cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
+task.wait(0.05)
 pcall(function() tl:Activate() end)
 end
 else
@@ -283,6 +180,7 @@ end
 end
 task.wait(0.4)
 end
+if cam then cam.CameraType=oldCamType cam.CameraSubject=oldCamSubject end
 end)
 end
 
@@ -290,6 +188,7 @@ local sg=Instance.new("ScreenGui",CG)
 sg.Name="MyLT2UI"
 sg.ResetOnSpawn=false
 sg.DisplayOrder=999
+_G.T.sg=sg
 
 local tb=Instance.new("TextButton",sg)
 tb.Size=UDim2.new(0,36,0,36)
@@ -307,6 +206,7 @@ mf.Position=UDim2.new(0,60,0.5,-215)
 mf.BackgroundColor3=Color3.fromRGB(25,25,30)
 mf.BorderSizePixel=0
 mf.Visible=false
+_G.T.mf=mf
 Instance.new("UICorner",mf).CornerRadius=UDim.new(0,10)
 
 local hd=Instance.new("Frame",mf)
@@ -334,6 +234,7 @@ cb.TextSize=10
 cb.Font=Enum.Font.GothamBold
 cb.BorderSizePixel=0
 cb.Visible=false
+_G.T.cb=cb
 Instance.new("UICorner",cb).CornerRadius=UDim.new(0,5)
 
 local sc=Instance.new("ScrollingFrame",mf)
@@ -344,12 +245,16 @@ sc.BorderSizePixel=0
 sc.ScrollBarThickness=3
 sc.CanvasSize=UDim2.new(0,0,0,0)
 sc.AutomaticCanvasSize=Enum.AutomaticSize.Y
+_G.T.sc=sc
 local ll=Instance.new("UIListLayout",sc)
 ll.Padding=UDim.new(0,2)
 ll.SortOrder=Enum.SortOrder.LayoutOrder
 local pd=Instance.new("UIPadding",sc)
 pd.PaddingTop=UDim.new(0,3)
 pd.PaddingBottom=UDim.new(0,6)
+
+local ord=0
+local function n() ord=ord+1 return ord end
 
 local function mB(t,cbk)
 local b=Instance.new("TextButton",sc)
@@ -365,6 +270,7 @@ task.wait(0.1)
 b.BackgroundColor3=Color3.fromRGB(45,45,55)
 if cbk then cbk()end end)
 end
+_G.T.mB=mB
 
 local function mT(t,cbk)
 local s=false
@@ -399,12 +305,11 @@ cl.BackgroundTransparency=1
 cl.Text=""
 cl.MouseButton1Click:Connect(function()
 s=not s
-if s then bg.BackgroundColor3=Color3.fromRGB(70,130,200)
-kn.Position=UDim2.new(1,-11,0.5,-4.5)
-else bg.BackgroundColor3=Color3.fromRGB(70,70,80)
-kn.Position=UDim2.new(0,2,0.5,-4.5)end
+if s then bg.BackgroundColor3=Color3.fromRGB(70,130,200) kn.Position=UDim2.new(1,-11,0.5,-4.5)
+else bg.BackgroundColor3=Color3.fromRGB(70,70,80) kn.Position=UDim2.new(0,2,0.5,-4.5) end
 if cbk then cbk(s)end end)
 end
+_G.T.mT=mT
 
 local function mS(t)
 local l=Instance.new("TextLabel",sc)
@@ -417,6 +322,7 @@ l.Font=Enum.Font.GothamBold
 l.TextXAlignment=Enum.TextXAlignment.Left
 l.LayoutOrder=n()
 end
+_G.T.mS=mS
 
 local function mSl(t,mn,mx,dv,cbk)
 local f=Instance.new("Frame",sc)
@@ -457,25 +363,20 @@ cl.BackgroundTransparency=1
 cl.Text=""
 local dg=false
 local function ud(i)
-local ax=tr.AbsolutePosition.X
-local sx=tr.AbsoluteSize.X
-local x=math.clamp(i.Position.X-ax,0,sx)
-local pc=x/sx
+local ax=tr.AbsolutePosition.X local sx=tr.AbsoluteSize.X
+local x=math.clamp(i.Position.X-ax,0,sx) local pc=x/sx
 local v=math.floor(mn+(mx-mn)*pc)
-fl.Size=UDim2.new(pc,0,1,0)
-kn.Position=UDim2.new(pc,-4.5,0.5,-4.5)
+fl.Size=UDim2.new(pc,0,1,0) kn.Position=UDim2.new(pc,-4.5,0.5,-4.5)
 l.Text=t..": "..v
 if cbk then cbk(v)end end
 cl.InputBegan:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-dg=true ud(i)end end)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=true ud(i) end end)
 cl.InputChanged:Connect(function(i)
-if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
-ud(i)end end)
+if dg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then ud(i) end end)
 UIS.InputEnded:Connect(function(i)
-if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
-dg=false end end)
+if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dg=false end end)
 end
+_G.T.mSl=mSl
 
 local function mD(t,lst,dv,cbk)
 local f=Instance.new("Frame",sc)
@@ -530,6 +431,7 @@ if lf then lf:Destroy()lf=nil end
 op=false end)
 end end)
 end
+_G.T.mD=mD
 
 mS("AUTO CHOP")
 mSl("Target Pohon",0,50,targetTree,function(v)
@@ -541,34 +443,19 @@ local list=getAvailableWoods()
 if #list==0 then return {"Belum ada pohon"}end
 return list
 end,sW,function(w)sW=w print("[TAKO] Pilih:",w)end)
-mB("TP Ke Pohon",tpT)
-mT("Auto Chop",function(s)if s then sCh()else cO=false print("[TAKO] OFF")end end)
-
-mS("TP KE REGION")
-local selRegion=""
-mD("Pilih Region",REGIONS,"",function(r)selRegion=r print("[TAKO] Region:",r)end)
-mB("TP Ke Region",function()
-if selRegion~=""then tpToRegion(selRegion)end
+mB("TP Ke Pohon",fT)
+mT("Auto Chop",function(s)
+if s then sCh() else cO=false print("[TAKO] OFF") end
 end)
-
-mS("SPEED")mT("Speed",function(s)sO=s end)mSl("Speed",20,300,sV,function(v)sV=v end)
-mS("FLY")mT("Fly",function(s)if s then sF()else stF()end end)mSl("Ketinggian",0,200,0,function(v)fH=v end)
-mS("TELEPORT")
-local sp=""
-mD("Pilih Pemain",gPL,"",function(nm)sp=nm end)
-mB("TP Ke Pemain",function()if sp~=""then tpP(sp)end end)
-mS("VISUAL")mT("Always Day",function(s)if s then sDay()else stDay()end end)
-mT("Noclip",function(s)nO=s
-if not s and P.Character then for _,p in ipairs(P.Character:GetDescendants())do
-if p:IsA("BasePart")then pcall(function()p.CanCollide=true p.CanQuery=true p.CanTouch=true end)end end end end)
-mS("MISC")mB("Rejoin",function()game:GetService("TeleportService"):Teleport(game.PlaceId,P)end)
 
 tb.MouseButton1Click:Connect(function()
 mf.Visible=not mf.Visible
 cb.Visible=mf.Visible end)
 cb.MouseButton1Click:Connect(function()
-if fO then stF()end cO=false stDay()sO=false nO=false
-sg:Destroy()end)
+cO=false
+sg:Destroy()
+if _G.T and _G.T.unloadExt then _G.T.unloadExt() end
+end)
 
 local dg,ds,sp2
 hd.InputBegan:Connect(function(i)
@@ -584,4 +471,186 @@ mf.Position=UDim2.new(sp2.X.Scale,sp2.X.Offset+d.X,sp2.Y.Scale,sp2.Y.Offset+d.Y)
 cb.Position=UDim2.new(mf.Position.X.Scale,mf.Position.X.Offset+161,mf.Position.Y.Scale,mf.Position.Y.Offset+3)
 end end)
 
-print("TAKO HUB v2 LOADED — Fix Auto Chop")
+-- ⭐ LOAD EXTENSION
+task.spawn(function()
+local ok, err = pcall(function()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/percobaan2354-source/Tako-Hub/main/extension.lua'))()
+end)
+if not ok then print("[TAKO] Ext error:",err) end
+end)
+print("TAKO HUB v1 LOADED — Base OK")
+if not _G.T then print("Execute version_1.0 dulu!") return end
+local CG=game:GetService("CoreGui")
+local TS=game:GetService("TweenService")
+local UIS=game:GetService("UserInputService")
+local RS=game:GetService("RunService")
+local P=game.Players.LocalPlayer
+local sg=_G.T.sg
+local sc=_G.T.sc
+local mB=_G.T.mB
+local mT=_G.T.mT
+local mS=_G.T.mS
+local mSl=_G.T.mSl
+local mD=_G.T.mD
+
+local fO,sO,nO,dO=false,false,false,false
+local fH=0
+local sV=60
+local fC,fB,fA,fY,dC
+
+RS.RenderStepped:Connect(function()
+local c=P.Character if not c then return end
+local m=c:FindFirstChildOfClass("Humanoid") if not m then return end
+if nO then
+for _,p in ipairs(c:GetDescendants())do
+if p:IsA("BasePart")then pcall(function()p.CanCollide=false p.CanQuery=false p.CanTouch=false end)end
+end
+end
+if sO and not fO then pcall(function() m.WalkSpeed=sV end)end
+end)
+
+local function sDay()
+dO=true
+local l=game:GetService("Lighting")
+l.ClockTime=14 l.Brightness=2 l.GlobalShadows=false
+dC=RS.Heartbeat:Connect(function() if dO then l.ClockTime=14 l.Brightness=2 end end)
+end
+local function stDay()
+dO=false
+if dC then dC:Disconnect() dC=nil end
+game:GetService("Lighting").Brightness=1
+end
+
+local function gPL()
+local l={}
+for _,pl in ipairs(game.Players:GetPlayers())do
+if pl~=P then
+local ch=pl.Character
+if ch and ch:FindFirstChild("HumanoidRootPart")then table.insert(l,pl.Name) end
+end
+end
+return l
+end
+
+local function tpP(pN)
+local t=game.Players:FindFirstChild(pN) if not t then return false end
+local tc=t.Character if not tc then return false end
+local th=tc:FindFirstChild("HumanoidRootPart") if not th then return false end
+local mc=P.Character if not mc then return false end
+local mh=mc:FindFirstChild("HumanoidRootPart") if not mh then return false end
+local tp=th.Position local tl=th.CFrame.LookVector
+mh.CFrame=CFrame.new(tp-tl*3,tp)
+print("[TAKO] TP ke pemain:",pN)
+return true
+end
+
+local REGIONS={"Region_LittleMeadow","Region_Plains","Region_Main","Region_SandIslands","Region_Snow","Region_SnowPeak","Region_Swamp","Region_Tropics","Region_Volcano","Region_MountainSide","Region_MazeCave","Region_Underbridge","Region_WaterCave"}
+
+local function tpToRegion(regionName)
+local region=workspace:FindFirstChild(regionName)
+if not region then print("[TAKO] Region gak ada:",regionName) return false end
+local char=P.Character
+local hrp=char and char:FindFirstChild("HumanoidRootPart")
+if not hrp then return false end
+local targetPos=nil
+if region:IsA("Folder") or region:IsA("Model")then
+for _,part in ipairs(region:GetDescendants())do
+if part:IsA("BasePart")then targetPos=part.Position+Vector3.new(0,5,0) break end
+end
+end
+if targetPos then
+hrp.CFrame=CFrame.new(targetPos)
+print("[TAKO] TP ke region:",regionName)
+return true
+end
+return false
+end
+
+local function sF()
+if fO then return end
+fO=true
+local c=P.Character
+local h=c and c:FindFirstChild("HumanoidRootPart")
+local m=c and c:FindFirstChildOfClass("Humanoid")
+if not h or not m then fO=false return end
+m.AutoRotate=false fY=h.Position.Y
+local at=Instance.new("Attachment",h) at.Name="FlyAtt"
+fA=Instance.new("AlignOrientation",h) fA.Attachment0=at
+fA.Mode=Enum.OrientationAlignmentMode.OneAttachment
+fA.MaxTorque=9e9 fA.Responsiveness=50 fA.CFrame=CFrame.new(h.Position)
+fB=Instance.new("BodyVelocity",h) fB.MaxForce=Vector3.new(9e9,9e9,9e9)
+fB.Velocity=Vector3.zero fB.P=50000
+fC=RS.RenderStepped:Connect(function(dt)
+if not fO then return end
+local cc=P.Character if not cc then return end
+local r=cc:FindFirstChild("HumanoidRootPart")
+local hh=cc:FindFirstChildOfClass("Humanoid")
+if not r or not hh or not fB then return end
+local md=hh.MoveDirection local tv=Vector3.zero
+if md.Magnitude>0 then
+local f=Vector3.new(md.X,0,md.Z)
+if f.Magnitude>0 then tv=f.Unit*60 end
+end
+local v=fB.Velocity
+local sx=v.X+(tv.X-v.X)*math.min(dt*12,1)
+local sz=v.Z+(tv.Z-v.Z)*math.min(dt*12,1)
+local ty=fY+fH local df=ty-r.Position.Y local vy=0
+if math.abs(df)>0.3 then vy=math.clamp(df*10,-300,300) end
+fB.Velocity=Vector3.new(sx,vy,sz)
+if fA then fA.CFrame=CFrame.new(r.Position) end
+end)
+end
+local function stF()
+fO=false
+if fC then fC:Disconnect() fC=nil end
+local c=P.Character
+if c then
+local m=c:FindFirstChildOfClass("Humanoid")
+if m then m.AutoRotate=true end
+end
+if fB then fB:Destroy() fB=nil end
+if fA then fA:Destroy() fA=nil end
+end
+
+mS("TP KE REGION")
+local selRegion=""
+mD("Pilih Region",REGIONS,"",function(r) selRegion=r print("[TAKO] Region:",r) end)
+mB("TP Ke Region",function()
+if selRegion~="" then tpToRegion(selRegion) end
+end)
+
+mS("SPEED")
+mT("Speed",function(s) sO=s end)
+mSl("Speed",20,300,sV,function(v) sV=v end)
+
+mS("FLY")
+mT("Fly",function(s) if s then sF() else stF() end end)
+mSl("Ketinggian",0,200,0,function(v) fH=v end)
+
+mS("TELEPORT")
+local sp=""
+mD("Pilih Pemain",gPL,"",function(nm) sp=nm end)
+mB("TP Ke Pemain",function() if sp~="" then tpP(sp) end end)
+
+mS("VISUAL")
+mT("Always Day",function(s) if s then sDay() else stDay() end end)
+mT("Noclip",function(s)
+nO=s
+if not s and P.Character then
+for _,p in ipairs(P.Character:GetDescendants())do
+if p:IsA("BasePart")then pcall(function() p.CanCollide=true p.CanQuery=true p.CanTouch=true end) end
+end
+end
+end)
+
+mS("MISC")
+mB("Rejoin",function() game:GetService("TeleportService"):Teleport(game.PlaceId,P) end)
+
+_G.T.unloadExt=function()
+if fO then stF() end
+stDay()
+sO=false
+nO=false
+end
+
+print("TAKO HUB Extension LOADED")
