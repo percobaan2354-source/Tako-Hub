@@ -81,8 +81,6 @@ if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
 dir=dir.Unit
 local fp=wp-dir*2.5+Vector3.new(0,1,0)
 h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
-local cam=workspace.CurrentCamera
-if cam then cam.CameraType=Enum.CameraType.Scriptable cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
 else
 print("[TAKO] GAK ADA pohon:",sW)
 end
@@ -92,95 +90,114 @@ local function sCh()
 cO=true
 choppedCount=0
 chC=task.spawn(function()
-local currentTree=nil
-local cuttingDone=false
-local hasTP=false
-local cam=workspace.CurrentCamera
-local oldCamType=cam.CameraType
-local oldCamSubject=cam.CameraSubject
-cam.CameraType=Enum.CameraType.Scriptable
-while cO do
-local c=P.Character
-if c then
-local h=c:FindFirstChild("HumanoidRootPart")
-local hum=c:FindFirstChildOfClass("Humanoid")
-local tl=c:FindFirstChildOfClass("Tool")
-if hum and hum.AutoRotate then hum.AutoRotate=false end
-if not tl then
-local bp=P:FindFirstChild("Backpack")
-if bp then
-for _,t in ipairs(bp:GetChildren())do
-if t:IsA("Tool")then c.Humanoid:EquipTool(t) task.wait(0.3) break end
-end
-end
-elseif h then
-if cuttingDone then
-print("[TAKO] Jeda 3 detik...")
-task.wait(3)
-cuttingDone=false
-currentTree=nil
-hasTP=false
-if targetTree>0 and choppedCount>=targetTree then print("[TAKO] Batch selesai — lanjut batch baru") choppedCount=0 end
-end
-if not currentTree then
-local nr,mD=nil,25
-local nrTree=nil
-local allTrees=getAllTrees()
-local sw=sW:lower()
-for _,t in ipairs(allTrees)do
-local tp=gTT(t)
-local tl2=tp:lower()
-local mt=(tl2==sw) or (tl2:find(sw,1,true)~=nil)
-if mt then
-for _,p in ipairs(t:GetDescendants())do
-if p.Name=="WoodSection"then
-local d=(p.Position-h.Position).Magnitude
-if d<mD then mD=d nr=p nrTree=t end
-break
-end
-end
-end
-end
-if nr and nrTree then
-currentTree=nrTree
-local wp=nr.Position
-local dir=Vector3.new(wp.X-h.Position.X,0,wp.Z-h.Position.Z)
-if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
-dir=dir.Unit
-local fp=wp-dir*2.5+Vector3.new(0,1,0)
-h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
-if hum then hum.AutoRotate=false end
-if cam then cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
-print("[TAKO] TP ke pohon ke-"..(choppedCount+1).."/"..(targetTree>0 and targetTree or "∞"))
-task.wait(0.15)
-hasTP=true
-else task.wait(1) end
-else
-local ws=nil
-for _,p in ipairs(currentTree:GetDescendants())do
-if p.Name=="WoodSection"then ws=p break end
-end
-if ws then
-if hasTP then
-local wp=ws.Position
-local fp=h.Position
-h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
-if hum then hum.AutoRotate=false end
-if cam then cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(wp.X, wp.Y, wp.Z)) end
-task.wait(0.05)
-pcall(function() tl:Activate() end)
-end
-else
-choppedCount=choppedCount+1
-print("[TAKO] Pohon tumbang! ("..choppedCount.."/"..(targetTree>0 and targetTree or "∞")..")")
-cuttingDone=true
-end
-end
-end
-end
-task.wait(0.4)
-end
-if cam then cam.CameraType=oldCamType cam.CameraSubject=oldCamSubject end
+    local currentTree=nil
+    local cuttingDone=false
+    local hasTP=false
+    local camConn=nil
+    local currentTarget=nil
+    
+    while cO do
+        local c=P.Character
+        if c then
+            local h=c:FindFirstChild("HumanoidRootPart")
+            local hum=c:FindFirstChildOfClass("Humanoid")
+            local tl=c:FindFirstChildOfClass("Tool")
+            
+            if hum and hum.AutoRotate then hum.AutoRotate=false end
+            
+            if not tl then
+                local bp=P:FindFirstChild("Backpack")
+                if bp then
+                    for _,t in ipairs(bp:GetChildren())do
+                        if t:IsA("Tool")then c.Humanoid:EquipTool(t) task.wait(0.3) break end
+                    end
+                end
+            elseif h then
+                if cuttingDone then
+                    print("[TAKO] Jeda 3 detik...")
+                    if camConn then camConn:Disconnect() camConn=nil end
+                    task.wait(3)
+                    cuttingDone=false
+                    currentTree=nil
+                    hasTP=false
+                    currentTarget=nil
+                    if targetTree>0 and choppedCount>=targetTree then print("[TAKO] Batch selesai") choppedCount=0 end
+                end
+                
+                if not currentTree then
+                    local nr,mD=nil,25
+                    local nrTree=nil
+                    local allTrees=getAllTrees()
+                    local sw=sW:lower()
+                    for _,t in ipairs(allTrees)do
+                        local tp=gTT(t)
+                        local tl2=tp:lower()
+                        local mt=(tl2==sw) or (tl2:find(sw,1,true)~=nil)
+                        if mt then
+                            for _,p in ipairs(t:GetDescendants())do
+                                if p.Name=="WoodSection"then
+                                    local d=(p.Position-h.Position).Magnitude
+                                    if d<mD then mD=d nr=p nrTree=t end
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    
+                    if nr and nrTree then
+                        currentTree=nrTree
+                        currentTarget=nr.Position
+                        local wp=nr.Position
+                        local dir=Vector3.new(wp.X-h.Position.X,0,wp.Z-h.Position.Z)
+                        if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
+                        dir=dir.Unit
+                        local fp=wp-dir*2.5+Vector3.new(0,1,0)
+                        h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+                        if hum then hum.AutoRotate=false end
+                        
+                        if camConn then camConn:Disconnect() end
+                        camConn=RS.RenderStepped:Connect(function()
+                            if not cO or not currentTarget then return end
+                            local cam=workspace.CurrentCamera
+                            if cam then
+                                cam.CFrame=CFrame.lookAt(cam.CFrame.Position, Vector3.new(currentTarget.X, currentTarget.Y, currentTarget.Z))
+                            end
+                        end)
+                        
+                        print("[TAKO] TP ke pohon ke-"..(choppedCount+1).."/"..(targetTree>0 and targetTree or "∞"))
+                        task.wait(0.15)
+                        hasTP=true
+                    else
+                        task.wait(1)
+                    end
+                else
+                    local ws=nil
+                    for _,p in ipairs(currentTree:GetDescendants())do
+                        if p.Name=="WoodSection"then ws=p break end
+                    end
+                    
+                    if ws then
+                        if hasTP then
+                            currentTarget=ws.Position
+                            local wp=ws.Position
+                            local fp=h.Position
+                            h.CFrame=CFrame.lookAt(fp, Vector3.new(wp.X, fp.Y, wp.Z))
+                            if hum then hum.AutoRotate=false end
+                            task.wait(0.05)
+                            pcall(function() tl:Activate() end)
+                        end
+                    else
+                        choppedCount=choppedCount+1
+                        print("[TAKO] Pohon tumbang! ("..choppedCount.."/"..(targetTree>0 and targetTree or "∞")..")")
+                        cuttingDone=true
+                    end
+                end
+            end
+        end
+        task.wait(0.4)
+    end
+    
+    if camConn then camConn:Disconnect() camConn=nil end
 end)
 end
 
@@ -471,13 +488,13 @@ mf.Position=UDim2.new(sp2.X.Scale,sp2.X.Offset+d.X,sp2.Y.Scale,sp2.Y.Offset+d.Y)
 cb.Position=UDim2.new(mf.Position.X.Scale,mf.Position.X.Offset+161,mf.Position.Y.Scale,mf.Position.Y.Offset+3)
 end end)
 
--- ⭐ LOAD EXTENSION
 task.spawn(function()
 local ok, err = pcall(function()
 loadstring(game:HttpGet('https://raw.githubusercontent.com/percobaan2354-source/Tako-Hub/main/extension.lua'))()
 end)
 if not ok then print("[TAKO] Ext error:",err) end
 end)
+
 print("TAKO HUB v1 LOADED — Base OK")
 if not _G.T then print("Execute version_1.0 dulu!") return end
 local CG=game:GetService("CoreGui")
