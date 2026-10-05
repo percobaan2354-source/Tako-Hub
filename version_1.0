@@ -1,4 +1,4 @@
--- TAKO HUB v9 FILE 1 (CORE + AUTO CHOP)
+-- TAKO HUB v10 FILE 1 (CORE + AUTO CHOP + AUTO AIM)
 local CG=game:GetService("CoreGui")
 local UIS=game:GetService("UserInputService")
 local RS=game:GetService("RunService")
@@ -83,6 +83,7 @@ local function sCh()
       local h=c:FindFirstChild("HumanoidRootPart")
       local hum=c:FindFirstChildOfClass("Humanoid")
       local tl=c:FindFirstChildOfClass("Tool")
+      local cam=workspace.CurrentCamera
       if hum then hum.AutoRotate=false end
       if not tl then
         local bp=P:FindFirstChild("Backpack")
@@ -92,17 +93,11 @@ local function sCh()
           end
         end
       end
-      local remote=nil
-      if tl then
-        for _,o in ipairs(tl:GetDescendants())do
-          if o:IsA("RemoteEvent")or o:IsA("RemoteFunction")then remote=o break end
-        end
-      end
-      if h and hum and tl then
+      if h and hum and tl and cam then
         if not cur or cutDone then
           if cutDone then
             print("[TAKO] Pohon tumbang! Jeda...")
-            task.wait(2)
+            task.wait(1.5)
             cutDone=false cur=nil
             choppedCount=choppedCount+1
             if targetTree>0 and choppedCount>=targetTree then
@@ -139,24 +134,20 @@ local function sCh()
             if isWood(p)then ws=p break end
           end
           if ws then
-            local tp2=ws.Position
-            local mp=h.Position
-            local dir=mp-tp2
+            local treePos=ws.Position
+            local myPos=h.Position
+            local dir=myPos-treePos
             dir=Vector3.new(dir.X,0,dir.Z)
             if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
             dir=dir.Unit
-            local tPos=tp2+dir*3
-            tPos=Vector3.new(tPos.X,mp.Y,tPos.Z)
-            h.CFrame=CFrame.new(tPos,Vector3.new(tp2.X,tPos.Y,tp2.Z))
+            local tPos=treePos+dir*4
+            tPos=Vector3.new(tPos.X,myPos.Y,tPos.Z)
+            h.CFrame=CFrame.new(tPos,Vector3.new(treePos.X,tPos.Y,treePos.Z))
             if hum then hum.AutoRotate=false end
+            -- AUTO AIM KAMERA KE POHON
+            cam.CFrame=CFrame.lookAt(cam.CFrame.Position,treePos)
             pcall(function()tl:Activate()end)
-            if remote then
-              pcall(function()
-                if remote:IsA("RemoteEvent")then remote:FireServer(ws)
-                elseif remote:IsA("RemoteFunction")then remote:InvokeServer(ws)end
-              end)
-            end
-            task.wait(0.25)
+            task.wait(0.3)
           else
             cutDone=true cur=nil
           end
@@ -459,8 +450,8 @@ task.spawn(function()
   end)
   if not ok then print("[TAKO] Ext error:",err)end
 end)
-print("TAKO HUB v9 FILE 1 OK")
--- TAKO HUB v9 FILE 2 (EXTENSION)
+print("TAKO HUB v10 FILE 1 OK")
+-- TAKO HUB v10 FILE 2 (EXTENSION)
 if not _G.T then print("[TAKO] Execute File 1 dulu!")return end
 local UIS=game:GetService("UserInputService")
 local RS=game:GetService("RunService")
@@ -640,4 +631,4 @@ _G.T.unloadExt=function()
   stDay()
   sO=false nO=false
 end
-print("TAKO HUB v9 FILE 2 OK")
+print("TAKO HUB v10 FILE 2 OK")
