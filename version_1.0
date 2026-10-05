@@ -1,4 +1,4 @@
--- TAKO HUB v10 FILE 1 (CORE + AUTO CHOP + AUTO AIM)
+-- TAKO HUB v11 FILE 1 (CORE + AUTO CHOP AGRESSIVE)
 local CG=game:GetService("CoreGui")
 local UIS=game:GetService("UserInputService")
 local RS=game:GetService("RunService")
@@ -72,9 +72,11 @@ local function fT()
   else print("[TAKO] GAK ADA pohon:",sW)end
 end
 
+-- AUTO CHOP V11 - AGRESSIVE
 local function sCh()
   cO=true
   choppedCount=0
+  local cam=workspace.CurrentCamera
   task.spawn(function()
     local cur,cutDone=nil,false
     while cO do
@@ -83,8 +85,7 @@ local function sCh()
       local h=c:FindFirstChild("HumanoidRootPart")
       local hum=c:FindFirstChildOfClass("Humanoid")
       local tl=c:FindFirstChildOfClass("Tool")
-      local cam=workspace.CurrentCamera
-      if hum then hum.AutoRotate=false end
+      if not h or not hum then task.wait(0.5)continue end
       if not tl then
         local bp=P:FindFirstChild("Backpack")
         if bp then
@@ -92,69 +93,92 @@ local function sCh()
             if t:IsA("Tool")then hum:EquipTool(t)task.wait(0.5)tl=t break end
           end
         end
+        if not tl then task.wait(0.5)continue end
       end
-      if h and hum and tl and cam then
-        if not cur or cutDone then
-          if cutDone then
-            print("[TAKO] Pohon tumbang! Jeda...")
-            task.wait(1.5)
-            cutDone=false cur=nil
-            choppedCount=choppedCount+1
-            if targetTree>0 and choppedCount>=targetTree then
-              print("[TAKO] Target tercapai! OFF.")
-              cO=false break
-            end
+      if not cur or cutDone then
+        if cutDone then
+          print("[TAKO] Pohon tumbang! ("..choppedCount..")")
+          task.wait(1.5)
+          cutDone=false cur=nil
+          choppedCount=choppedCount+1
+          if targetTree>0 and choppedCount>=targetTree then
+            print("[TAKO] Target tercapai! OFF.")
+            cO=false break
           end
-          local nr,mD,nrT=nil,30,nil
-          local sw=sW:lower()
-          for _,t in ipairs(getAllTrees())do
-            local tp=gTT(t)
-            local tl2=tp:lower()
-            if(tl2==sw)or(tl2:find(sw,1,true)~=nil)then
-              for _,p in ipairs(t:GetDescendants())do
-                if isWood(p)then
-                  local d=(p.Position-h.Position).Magnitude
-                  if d<mD then mD=d nr=p nrT=t end
-                  break
-                end
+        end
+        local nr,mD,nrT=nil,50,nil
+        local sw=sW:lower()
+        for _,t in ipairs(getAllTrees())do
+          local tp=gTT(t)
+          local tl2=tp:lower()
+          if(tl2==sw)or(tl2:find(sw,1,true)~=nil)then
+            for _,p in ipairs(t:GetDescendants())do
+              if isWood(p)then
+                local d=(p.Position-h.Position).Magnitude
+                if d<mD then mD=d nr=p nrT=t end
+                break
               end
             end
           end
-          if nr and nrT then
-            cur=nrT
-            print("[TAKO] Nemuin:",gTT(nrT))
-          else
-            print("[TAKO] Gak ada",sW,"- nunggu...")
-            task.wait(1)
-          end
         end
-        if cur then
-          local ws=nil
-          for _,p in ipairs(cur:GetDescendants())do
-            if isWood(p)then ws=p break end
-          end
-          if ws then
-            local treePos=ws.Position
-            local myPos=h.Position
-            local dir=myPos-treePos
-            dir=Vector3.new(dir.X,0,dir.Z)
-            if dir.Magnitude<0.1 then dir=Vector3.new(1,0,0)end
-            dir=dir.Unit
-            local tPos=treePos+dir*4
-            tPos=Vector3.new(tPos.X,myPos.Y,tPos.Z)
-            h.CFrame=CFrame.new(tPos,Vector3.new(treePos.X,tPos.Y,treePos.Z))
-            if hum then hum.AutoRotate=false end
-            -- AUTO AIM KAMERA KE POHON
-            cam.CFrame=CFrame.lookAt(cam.CFrame.Position,treePos)
-            pcall(function()tl:Activate()end)
-            task.wait(0.3)
-          else
-            cutDone=true cur=nil
-          end
+        if nr and nrT then
+          cur=nrT
+          print("[TAKO] Nemuin:",gTT(nrT))
+        else
+          print("[TAKO] Gak ada",sW,"- nunggu...")
+          task.wait(1)
         end
-      else task.wait(0.5)end
+      end
+      if cur then
+        local ws=nil
+        for _,p in ipairs(cur:GetDescendants())do
+          if isWood(p)then ws=p break end
+        end
+        if ws then
+          local treePos=ws.Position
+          local myPos=h.Position
+          local dir=myPos-treePos
+          dir=Vector3.new(dir.X,0,dir.Z)
+          if dir.Magnitude<0.5 then dir=Vector3.new(1,0,0)end
+          dir=dir.Unit
+          local targetPos=treePos+dir*3
+          targetPos=Vector3.new(targetPos.X,myPos.Y,targetPos.Z)
+          h.CFrame=CFrame.new(targetPos,Vector3.new(treePos.X,targetPos.Y,treePos.Z))
+          h.Velocity=Vector3.zero
+          hum.AutoRotate=false
+          -- Spam activate
+          pcall(function()tl:Activate()end)
+          pcall(function()
+            if tl.Activated then tl.Activated:Fire()end
+          end)
+          -- Fire semua remote
+          for _,obj in ipairs(tl:GetDescendants())do
+            if obj:IsA("RemoteEvent")then
+              pcall(function()obj:FireServer(ws)end)
+            elseif obj:IsA("RemoteFunction")then
+              pcall(function()obj:InvokeServer(ws)end)
+            end
+          end
+          -- Freeze camera ke pohon
+          pcall(function()
+            cam.CameraType=Enum.CameraType.Scriptable
+            cam.CFrame=CFrame.lookAt(h.Position+Vector3.new(0,2,0),treePos)
+          end)
+          task.wait(0.35)
+        else
+          cutDone=true cur=nil
+        end
+      end
       task.wait(0.1)
     end
+    -- Restore camera
+    pcall(function()
+      cam.CameraType=Enum.CameraType.Custom
+      if P.Character then
+        local hh=P.Character:FindFirstChildOfClass("Humanoid")
+        if hh then cam.CameraSubject=hh end
+      end
+    end)
   end)
 end
 
@@ -450,8 +474,8 @@ task.spawn(function()
   end)
   if not ok then print("[TAKO] Ext error:",err)end
 end)
-print("TAKO HUB v10 FILE 1 OK")
--- TAKO HUB v10 FILE 2 (EXTENSION)
+print("TAKO HUB v11 FILE 1 OK")
+-- TAKO HUB v11 FILE 2 (EXTENSION)
 if not _G.T then print("[TAKO] Execute File 1 dulu!")return end
 local UIS=game:GetService("UserInputService")
 local RS=game:GetService("RunService")
@@ -631,4 +655,4 @@ _G.T.unloadExt=function()
   stDay()
   sO=false nO=false
 end
-print("TAKO HUB v10 FILE 2 OK")
+print("TAKO HUB v11 FILE 2 OK")
