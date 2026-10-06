@@ -14,17 +14,10 @@ end
 task.wait(0.2)
 
 _G.TakoLock = {
-    targetTreeType = "Oak",
-    autoChop = false,
-    swingDelay = 0.7,
-    choppedCount = 0,
-    targetCount = 3,
-    flyEnabled = false,
-    flyHeight = 0,
-    speedEnabled = false,
-    speedValue = 60,
-    noclipEnabled = false,
-    alwaysDay = false
+    targetTreeType = "Oak", autoChop = false, swingDelay = 0.7,
+    choppedCount = 0, targetCount = 3, flyEnabled = false,
+    flyHeight = 0, speedEnabled = false, speedValue = 60,
+    noclipEnabled = false, alwaysDay = false
 }
 local lock = _G.TakoLock
 _G.TakoBlacklist = {}
@@ -253,18 +246,23 @@ local function restoreCamera()
 end
 _G.TakoRestoreCamera = restoreCamera
 
--- Placeholder UI (nanti diisi File 2)
-local sg = Instance.new("ScreenGui", CG)
-sg.Name = "TakoMainUI"
-sg.ResetOnSpawn = false
-sg.DisplayOrder = 999
-_G.TakoSG = sg
-
 notify("TAKO HUB", "File 1 Loaded")
 print("TAKO HUB FILE 1 LOADED")
--- TAKO HUB - FILE 2 (AUTO CHOP + UI)
+
+-- AUTO-LOAD FILE 2 & 3
+task.spawn(function()
+    task.wait(0.3)
+    pcall(function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/percobaan2354-source/Tako-Hub/main/extension.lua'))()
+    end)
+    task.wait(1)
+    pcall(function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/percobaan2354-source/Tako-Hub/main/extra.lua'))()
+    end)
+end)
+-- TAKO HUB - FILE 2 (UI + AUTO CHOP)
 if not _G.TakoLock then
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title="TAKO HUB", Text="Execute FILE 1 dulu!", Duration=5})
+    print("[TAKO] File 1 belum ke-load")
     return
 end
 
@@ -272,7 +270,6 @@ local CG = game:GetService("CoreGui")
 local UIS = game:GetService("UserInputService")
 local VIM = game:GetService("VirtualInputManager")
 local P = game.Players.LocalPlayer
-local SG = game:GetService("StarterGui")
 
 local lock = _G.TakoLock
 local notify = _G.TakoNotify
@@ -287,6 +284,7 @@ local tpInsideTree = _G.TakoTPInsideTree
 local aimAtTree = _G.TakoAimAtTree
 local restoreCamera = _G.TakoRestoreCamera
 
+-- AUTO CHOP LOOP
 local function startAutoChop()
     task.spawn(function()
         while lock.autoChop do
@@ -385,8 +383,13 @@ local function startAutoChop()
     end)
 end
 
--- UI Builder
-local sg = _G.TakoSG
+-- UI
+local sg = Instance.new("ScreenGui", CG)
+sg.Name = "TakoMainUI"
+sg.ResetOnSpawn = false
+sg.DisplayOrder = 999
+_G.TakoSG = sg
+
 local btn = Instance.new("TextButton", sg)
 btn.Size = UDim2.new(0, 45, 0, 45)
 btn.Position = UDim2.new(0, 8, 0, 80)
@@ -399,8 +402,8 @@ btn.BorderSizePixel = 0
 Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
 
 local panel = Instance.new("Frame", sg)
-panel.Size = UDim2.new(0, 180, 0, 340)
-panel.Position = UDim2.new(0, 8, 0, 130)
+panel.Size = UDim2.new(0, 180, 0, 420)
+panel.Position = UDim2.new(0, 60, 0, 80)
 panel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 panel.BorderSizePixel = 0
 panel.Visible = false
@@ -438,8 +441,23 @@ scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 local layout = Instance.new("UIListLayout", scroll)
 layout.Padding = UDim.new(0, 4)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
+_G.TakoScroll = scroll
 
-local function makeBtn(text, color, cbk)
+btn.MouseButton1Click:Connect(function() panel.Visible = not panel.Visible end)
+
+-- BUILDER GLOBAL
+_G.TakoMakeSection = function(text)
+    local l = Instance.new("TextLabel", scroll)
+    l.Size = UDim2.new(1, 0, 0, 14)
+    l.BackgroundTransparency = 1
+    l.Text = "• "..text
+    l.TextColor3 = Color3.fromRGB(120, 170, 255)
+    l.TextSize = 9
+    l.Font = Enum.Font.GothamBold
+    l.TextXAlignment = Enum.TextXAlignment.Left
+end
+
+_G.TakoMakeBtn = function(text, color, cbk)
     local b = Instance.new("TextButton", scroll)
     b.Size = UDim2.new(1, 0, 0, 26)
     b.BackgroundColor3 = color or Color3.fromRGB(45, 45, 55)
@@ -458,7 +476,7 @@ local function makeBtn(text, color, cbk)
     end)
 end
 
-local function makeToggle(text, cbk)
+_G.TakoMakeToggle = function(text, cbk)
     local f = Instance.new("Frame", scroll)
     f.Size = UDim2.new(1, 0, 0, 26)
     f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
@@ -503,59 +521,7 @@ local function makeToggle(text, cbk)
     end)
 end
 
-local function makeDropdown(text, getList, default, cbk)
-    local f = Instance.new("Frame", scroll)
-    f.Size = UDim2.new(1, 0, 0, 26)
-    f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
-    local b = Instance.new("TextButton", f)
-    b.Size = UDim2.new(1, 0, 1, 0)
-    b.BackgroundTransparency = 1
-    b.Text = "  "..text..": "..default
-    b.TextColor3 = Color3.fromRGB(230, 230, 230)
-    b.TextSize = 9
-    b.Font = Enum.Font.GothamBold
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    local op, lf = false, nil
-    b.MouseButton1Click:Connect(function()
-        if op and lf then lf:Destroy() lf = nil op = false return end
-        op = true
-        lf = Instance.new("ScrollingFrame", sg)
-        lf.Size = UDim2.new(0, 160, 0, 200)
-        lf.Position = UDim2.new(0, 60, 0, 180)
-        lf.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
-        lf.BorderSizePixel = 0
-        lf.ZIndex = 200
-        lf.ScrollBarThickness = 3
-        lf.CanvasSize = UDim2.new(0, 0, 0, 0)
-        lf.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        Instance.new("UICorner", lf).CornerRadius = UDim.new(0, 6)
-        local ly = Instance.new("UIListLayout", lf)
-        ly.Padding = UDim.new(0, 2)
-        for _, w in ipairs(getList()) do
-            local o = Instance.new("TextButton", lf)
-            o.Size = UDim2.new(1, -4, 0, 22)
-            o.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            o.Text = "  "..w
-            o.TextColor3 = Color3.fromRGB(230, 230, 230)
-            o.TextSize = 9
-            o.Font = Enum.Font.GothamBold
-            o.TextXAlignment = Enum.TextXAlignment.Left
-            o.BorderSizePixel = 0
-            o.ZIndex = 201
-            Instance.new("UICorner", o).CornerRadius = UDim.new(0, 3)
-            o.MouseButton1Click:Connect(function()
-                b.Text = "  "..text..": "..w
-                if cbk then cbk(w) end
-                if lf then lf:Destroy() lf = nil end
-                op = false
-            end)
-        end
-    end)
-end
-
-local function makeSlider(text, min, max, default, cbk)
+_G.TakoMakeSlider = function(text, min, max, default, cbk)
     local f = Instance.new("Frame", scroll)
     f.Size = UDim2.new(1, 0, 0, 28)
     f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
@@ -607,16 +573,70 @@ local function makeSlider(text, min, max, default, cbk)
     end)
 end
 
-makeDropdown("Jenis Kayu", getAvailableWoods, lock.targetTreeType, function(w)
+_G.TakoMakeDropdown = function(text, getList, default, cbk)
+    local f = Instance.new("Frame", scroll)
+    f.Size = UDim2.new(1, 0, 0, 26)
+    f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
+    local b = Instance.new("TextButton", f)
+    b.Size = UDim2.new(1, 0, 1, 0)
+    b.BackgroundTransparency = 1
+    b.Text = "  "..text..": "..default
+    b.TextColor3 = Color3.fromRGB(230, 230, 230)
+    b.TextSize = 9
+    b.Font = Enum.Font.GothamBold
+    b.TextXAlignment = Enum.TextXAlignment.Left
+    local op, lf = false, nil
+    b.MouseButton1Click:Connect(function()
+        if op and lf then lf:Destroy() lf = nil op = false return end
+        op = true
+        lf = Instance.new("ScrollingFrame", sg)
+        lf.Size = UDim2.new(0, 160, 0, 200)
+        lf.Position = UDim2.new(0, 60, 0, 180)
+        lf.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+        lf.BorderSizePixel = 0
+        lf.ZIndex = 200
+        lf.ScrollBarThickness = 3
+        lf.CanvasSize = UDim2.new(0, 0, 0, 0)
+        lf.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        Instance.new("UICorner", lf).CornerRadius = UDim.new(0, 6)
+        local ly = Instance.new("UIListLayout", lf)
+        ly.Padding = UDim.new(0, 2)
+        for _, w in ipairs(getList()) do
+            local o = Instance.new("TextButton", lf)
+            o.Size = UDim2.new(1, -4, 0, 22)
+            o.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            o.Text = "  "..w
+            o.TextColor3 = Color3.fromRGB(230, 230, 230)
+            o.TextSize = 9
+            o.Font = Enum.Font.GothamBold
+            o.TextXAlignment = Enum.TextXAlignment.Left
+            o.BorderSizePixel = 0
+            o.ZIndex = 201
+            Instance.new("UICorner", o).CornerRadius = UDim.new(0, 3)
+            o.MouseButton1Click:Connect(function()
+                b.Text = "  "..text..": "..w
+                if cbk then cbk(w) end
+                if lf then lf:Destroy() lf = nil end
+                op = false
+            end)
+        end
+    end)
+end
+
+-- MENU AUTO CHOP
+_G.TakoMakeSection("AUTO CHOP")
+_G.TakoMakeDropdown("Jenis Kayu", getAvailableWoods, lock.targetTreeType, function(w)
     lock.targetTreeType = w
     _G.TakoTargetWS = nil
     _G.TakoLastTree = nil
     _G.TakoLowestWS = nil
     _G.TakoBlacklist = {}
 end)
-makeSlider("Target Pohon", 1, 3, lock.targetCount, function(v) lock.targetCount = v end)
-makeSlider("Delay Swing", 0.3, 2, lock.swingDelay, function(v) lock.swingDelay = v end)
-makeBtn("TP KE POHON", Color3.fromRGB(45, 90, 60), function()
+_G.TakoMakeSlider("Target Pohon", 1, 3, lock.targetCount, function(v) lock.targetCount = v end)
+_G.TakoMakeSlider("Delay Swing", 0.3, 2, lock.swingDelay, function(v) lock.swingDelay = v end)
+_G.TakoMakeBtn("TP KE POHON", Color3.fromRGB(45, 90, 60), function()
     local sw = lock.targetTreeType:lower()
     local nearest, mD = nil, math.huge
     for _, t in ipairs(getAllTrees()) do
@@ -643,7 +663,7 @@ makeBtn("TP KE POHON", Color3.fromRGB(45, 90, 60), function()
         notify("TAKO", "Gak nemu: "..lock.targetTreeType)
     end
 end)
-makeBtn("TES AIM + TOUCH", Color3.fromRGB(90, 60, 45), function()
+_G.TakoMakeBtn("TES AIM + TOUCH", Color3.fromRGB(90, 60, 45), function()
     local sw = lock.targetTreeType:lower()
     for _, t in ipairs(getAllTrees()) do
         local tp = gTT(t):lower()
@@ -670,7 +690,7 @@ makeBtn("TES AIM + TOUCH", Color3.fromRGB(90, 60, 45), function()
         end
     end
 end)
-makeToggle("Auto Chop", function(s)
+_G.TakoMakeToggle("Auto Chop", function(s)
     lock.autoChop = s
     if s then
         _G.TakoLastTree = nil
@@ -683,7 +703,7 @@ makeToggle("Auto Chop", function(s)
         notify("TAKO", "Auto Chop OFF")
     end
 end)
-makeBtn("CEK KAPAK", Color3.fromRGB(60, 60, 90), function()
+_G.TakoMakeBtn("CEK KAPAK", Color3.fromRGB(60, 60, 90), function()
     local axe = findAxe()
     if axe then
         local tn = axe:FindFirstChild("ToolName")
@@ -693,24 +713,24 @@ makeBtn("CEK KAPAK", Color3.fromRGB(60, 60, 90), function()
     end
 end)
 
-btn.MouseButton1Click:Connect(function() panel.Visible = not panel.Visible end)
-
-notify("TAKO HUB", "File 2 Loaded! Klik TH")
 print("TAKO HUB FILE 2 LOADED")
 -- TAKO HUB - FILE 3 (UTILS + TP)
-if not _G.TakoLock then
-    game:GetService("StarterGui"):SetCore("SendNotification", {Title="TAKO HUB", Text="Execute FILE 1 dulu!", Duration=5})
+if not _G.TakoScroll or not _G.TakoMakeSection then
+    print("[TAKO] File 1/2 belum ke-load")
     return
 end
 
-local CG = game:GetService("CoreGui")
-local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
 local P = game.Players.LocalPlayer
 local notify = _G.TakoNotify
 local lock = _G.TakoLock
+local makeSection = _G.TakoMakeSection
+local makeToggle = _G.TakoMakeToggle
+local makeSlider = _G.TakoMakeSlider
+local makeBtn = _G.TakoMakeBtn
+local makeDropdown = _G.TakoMakeDropdown
 
--- ========== FLY ==========
+-- FLY
 local flyConn = nil
 local alignOrient = nil
 local bodyVel = nil
@@ -802,7 +822,7 @@ local function stopDay()
     game:GetService("Lighting").Brightness = 1
 end
 
--- ========== TP FUNCTIONS ==========
+-- TP
 local function tpTo(pos, name)
     local c = P.Character
     if not c then notify("TP", "Karakter gak ada") return end
@@ -873,232 +893,8 @@ local function tpToPlayer(pn)
     tpTo(th.Position - th.CFrame.LookVector * 3, pn)
 end
 
--- ========== UI ==========
-local sg = Instance.new("ScreenGui", CG)
-sg.Name = "TakoExtraUI"
-sg.ResetOnSpawn = false
-sg.DisplayOrder = 999
-
-local btn = Instance.new("TextButton", sg)
-btn.Size = UDim2.new(0, 45, 0, 45)
-btn.Position = UDim2.new(0, 8, 0, 130)
-btn.BackgroundColor3 = Color3.fromRGB(45, 45, 90)
-btn.Text = "EX"
-btn.TextSize = 14
-btn.TextColor3 = Color3.new(1, 1, 1)
-btn.Font = Enum.Font.GothamBold
-btn.BorderSizePixel = 0
-Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-
-local panel = Instance.new("Frame", sg)
-panel.Size = UDim2.new(0, 180, 0, 400)
-panel.Position = UDim2.new(0, 60, 0, 130)
-panel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-panel.BorderSizePixel = 0
-panel.Visible = false
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 8)
-
-local title = Instance.new("TextLabel", panel)
-title.Size = UDim2.new(1, -30, 0, 22)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "UTILS + TP"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 10
-title.Font = Enum.Font.GothamBold
-
-local closeBtn = Instance.new("TextButton", panel)
-closeBtn.Size = UDim2.new(0, 18, 0, 18)
-closeBtn.Position = UDim2.new(1, -22, 0, 2)
-closeBtn.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 9
-closeBtn.BorderSizePixel = 0
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
-closeBtn.MouseButton1Click:Connect(function() panel.Visible = false end)
-
-local scroll = Instance.new("ScrollingFrame", panel)
-scroll.Size = UDim2.new(1, -8, 1, -30)
-scroll.Position = UDim2.new(0, 4, 0, 26)
-scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-scroll.ScrollBarThickness = 3
-scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-local layout = Instance.new("UIListLayout", scroll)
-layout.Padding = UDim.new(0, 4)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local function makeToggle(text, cbk)
-    local f = Instance.new("Frame", scroll)
-    f.Size = UDim2.new(1, 0, 0, 26)
-    f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
-    local l = Instance.new("TextLabel", f)
-    l.Size = UDim2.new(1, -50, 1, 0)
-    l.Position = UDim2.new(0, 8, 0, 0)
-    l.BackgroundTransparency = 1
-    l.Text = text
-    l.TextColor3 = Color3.fromRGB(230, 230, 230)
-    l.TextSize = 9
-    l.Font = Enum.Font.GothamBold
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    local bg = Instance.new("Frame", f)
-    bg.Size = UDim2.new(0, 30, 0, 14)
-    bg.Position = UDim2.new(1, -38, 0.5, -7)
-    bg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-    bg.BorderSizePixel = 0
-    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
-    local kn = Instance.new("Frame", bg)
-    kn.Size = UDim2.new(0, 10, 0, 10)
-    kn.Position = UDim2.new(0, 2, 0.5, -5)
-    kn.BackgroundColor3 = Color3.new(1, 1, 1)
-    kn.BorderSizePixel = 0
-    Instance.new("UICorner", kn).CornerRadius = UDim.new(1, 0)
-    local state = false
-    local cl = Instance.new("TextButton", f)
-    cl.Size = UDim2.new(1, 0, 1, 0)
-    cl.BackgroundTransparency = 1
-    cl.Text = ""
-    cl.MouseButton1Click:Connect(function()
-        state = not state
-        if state then
-            bg.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-            kn.Position = UDim2.new(1, -12, 0.5, -5)
-        else
-            bg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-            kn.Position = UDim2.new(0, 2, 0.5, -5)
-        end
-        if cbk then cbk(state) end
-    end)
-end
-
-local function makeSlider(text, min, max, default, cbk)
-    local f = Instance.new("Frame", scroll)
-    f.Size = UDim2.new(1, 0, 0, 28)
-    f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
-    local l = Instance.new("TextLabel", f)
-    l.Size = UDim2.new(1, -12, 0, 10)
-    l.Position = UDim2.new(0, 6, 0, 1)
-    l.BackgroundTransparency = 1
-    l.Text = text..": "..default
-    l.TextColor3 = Color3.fromRGB(230, 230, 230)
-    l.TextSize = 8
-    l.Font = Enum.Font.GothamBold
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    local tr = Instance.new("Frame", f)
-    tr.Size = UDim2.new(1, -12, 0, 5)
-    tr.Position = UDim2.new(0, 6, 0, 18)
-    tr.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
-    tr.BorderSizePixel = 0
-    Instance.new("UICorner", tr).CornerRadius = UDim.new(1, 0)
-    local fl = Instance.new("Frame", tr)
-    fl.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
-    fl.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-    fl.BorderSizePixel = 0
-    Instance.new("UICorner", fl).CornerRadius = UDim.new(1, 0)
-    local cl = Instance.new("TextButton", f)
-    cl.Size = UDim2.new(1, 0, 1, 0)
-    cl.BackgroundTransparency = 1
-    cl.Text = ""
-    local dg = false
-    local function ud(i)
-        local ax = tr.AbsolutePosition.X
-        local sx = tr.AbsoluteSize.X
-        local x = math.clamp(i.Position.X - ax, 0, sx)
-        local pc = x / sx
-        local v = math.floor((min + (max-min) * pc) * 100) / 100
-        fl.Size = UDim2.new(pc, 0, 1, 0)
-        l.Text = text..": "..v
-        if cbk then cbk(v) end
-    end
-    cl.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dg = true ud(i) end
-    end)
-    cl.InputChanged:Connect(function(i)
-        if dg and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then ud(i) end
-    end)
-    UIS.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dg = false end
-    end)
-end
-
-local function makeBtn(text, color, cbk)
-    local b = Instance.new("TextButton", scroll)
-    b.Size = UDim2.new(1, 0, 0, 26)
-    b.BackgroundColor3 = color or Color3.fromRGB(45, 45, 55)
-    b.Text = text
-    b.TextColor3 = Color3.new(1, 1, 1)
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 9
-    b.BorderSizePixel = 0
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
-    b.MouseButton1Click:Connect(function()
-        local o = b.BackgroundColor3
-        b.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-        task.wait(0.1)
-        b.BackgroundColor3 = o
-        if cbk then cbk() end
-    end)
-end
-
-local function makeDropdown(text, getList, default, cbk)
-    local f = Instance.new("Frame", scroll)
-    f.Size = UDim2.new(1, 0, 0, 26)
-    f.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-    f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
-    local b = Instance.new("TextButton", f)
-    b.Size = UDim2.new(1, 0, 1, 0)
-    b.BackgroundTransparency = 1
-    b.Text = "  "..text..": "..default
-    b.TextColor3 = Color3.fromRGB(230, 230, 230)
-    b.TextSize = 9
-    b.Font = Enum.Font.GothamBold
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    local op, lf = false, nil
-    b.MouseButton1Click:Connect(function()
-        if op and lf then lf:Destroy() lf = nil op = false return end
-        op = true
-        lf = Instance.new("ScrollingFrame", sg)
-        lf.Size = UDim2.new(0, 160, 0, 200)
-        lf.Position = UDim2.new(0, 60, 0, 180)
-        lf.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
-        lf.BorderSizePixel = 0
-        lf.ZIndex = 200
-        lf.ScrollBarThickness = 3
-        lf.CanvasSize = UDim2.new(0, 0, 0, 0)
-        lf.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        Instance.new("UICorner", lf).CornerRadius = UDim.new(0, 6)
-        local ly = Instance.new("UIListLayout", lf)
-        ly.Padding = UDim.new(0, 2)
-        for _, w in ipairs(getList()) do
-            local o = Instance.new("TextButton", lf)
-            o.Size = UDim2.new(1, -4, 0, 22)
-            o.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            o.Text = "  "..w
-            o.TextColor3 = Color3.fromRGB(230, 230, 230)
-            o.TextSize = 9
-            o.Font = Enum.Font.GothamBold
-            o.TextXAlignment = Enum.TextXAlignment.Left
-            o.BorderSizePixel = 0
-            o.ZIndex = 201
-            Instance.new("UICorner", o).CornerRadius = UDim.new(0, 3)
-            o.MouseButton1Click:Connect(function()
-                b.Text = "  "..text..": "..w
-                if cbk then cbk(w) end
-                if lf then lf:Destroy() lf = nil end
-                op = false
-            end)
-        end
-    end)
-end
-
+-- MENU UTILS
+makeSection("FLY / SPEED / NOCLIP")
 makeToggle("Fly", function(s)
     if s then startFly() notify("FLY", "ON") else stopFly() notify("FLY", "OFF") end
 end)
@@ -1106,10 +902,15 @@ makeSlider("Ketinggian Fly", 0, 200, lock.flyHeight, function(v) lock.flyHeight 
 makeToggle("Speed", function(s) lock.speedEnabled = s end)
 makeSlider("Speed Value", 20, 300, lock.speedValue, function(v) lock.speedValue = v end)
 makeToggle("Noclip", function(s) lock.noclipEnabled = s end)
+
+-- MENU VISUAL
+makeSection("VISUAL")
 makeToggle("Always Day", function(s)
     if s then startDay() notify("DAY", "ON") else stopDay() notify("DAY", "OFF") end
 end)
 
+-- MENU TP
+makeSection("TP SHORTCUT")
 makeBtn("TP WOOD DROPOFF", Color3.fromRGB(45, 90, 60), function()
     local pos = getDropoffPos()
     if pos then tpTo(pos, "Dropoff") else notify("TP", "Gak ketemu") end
@@ -1143,11 +944,9 @@ makeBtn("TP PLAYER", Color3.fromRGB(70, 45, 90), function()
     if selPl ~= "" then tpToPlayer(selPl) else notify("TP", "Pilih dulu") end
 end)
 
+makeSection("MISC")
 makeBtn("REJOIN", Color3.fromRGB(150, 40, 40), function()
     game:GetService("TeleportService"):Teleport(game.PlaceId, P)
 end)
 
-btn.MouseButton1Click:Connect(function() panel.Visible = not panel.Visible end)
-
-notify("TAKO HUB", "File 3 Loaded! Klik EX")
 print("TAKO HUB FILE 3 LOADED")
